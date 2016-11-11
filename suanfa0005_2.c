@@ -62,7 +62,7 @@ int add_set(int i,int state){
 			result=add_result;
 		}
 	}else{
-		for(;i<=M-state&&i<(M/N+1)*(N-state+1);i++){
+		for(;i<=M-state&&i<(M/N+2)*(N-state+1);i++){
 			set[i]=1;
 			add_set(i+1,state-1);
 			set[i]=0;
