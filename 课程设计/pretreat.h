@@ -1,0 +1,58 @@
+#ifndef PRETREAT_H
+#define PRETREAT_H
+
+#include <stdio.h>
+#include <string.h>
+#include <malloc.h>
+//#include "state.h"
+
+#define TRUE 1
+#define FALSE 0
+#define OK 1
+#define ERROR 0
+#define OVERFLOW -1
+typedef int state;
+/*以上内容为state.h的内容不知道怎么才好看*/
+#define PRENUM 3
+#define PRENAM "pre"
+#define INTERNUM 5
+#define INTERNAM "inter" 
+#define CHAR_NUMBER 100//读取每行代码数量
+#define varDefNam 30//define 中名字
+#define varDefValue 30//define中值的字符串
+#define MENU 0
+#define DEF_ONE 1
+#define DEF_VAR 2
+#define DEF_FUN 3//define 中三种形式
+#define NO 0
+#define IF 1
+#define ELSE 2
+#define ELIF 1
+#define ENDIF 0
+#define IFDEF 1
+#define IFNDEF 1
+#define WHILE_T0(x) while(*x==' '||*x=='\t') x++; 
+struct deffunc{
+	int type;
+	union{
+		char c;
+		struct deffunc *next;
+	}value;
+	struct  deffunc *next;
+};
+typedef struct defhash
+{
+	int type;
+	char name[varDefNam];
+	union{
+		char infor[varDefValue];
+		struct deffunc *next;																																																																																																																																																																																																																																																																																																																																																																																																						
+	}value;
+	struct  defhash *next;
+} DEFINES;
+
+DEFINES defineMenu[27];//0:'_';1~26:A~Z
+state defineState;
+state pretreatment(const char *filename);
+
+#endif
