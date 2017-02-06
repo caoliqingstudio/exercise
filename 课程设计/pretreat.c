@@ -1,57 +1,30 @@
 #include "pretreat.h"
-/**********/
-/*待删除，用于方便写代码*/
 
-#define TRUE 1
-#define FALSE 0
-#define OK 1
-#define ERROR 0
-#define OVERFLOW -1
-
-typedef int state;
-#define MENU 0
-#define DEF_ONE 1
-#define DEF_VAR 2
-#define DEF_FUN 3//difine 中三种形式
-typedef struct defhash
-{
-	int type;
-	char name[varDefNam];
-	struct  defhash *next;
-} DEFINES;
-
-#define WHILE_T0(x,i) while(x[i]==' '||x[i]=='\t') i++;
-
-DEFINES defineMenu[27];//0:'_';1~26:A~Z
-#define NO 0
-#define IF 1
-#define ELSE 2
-#define ELIF 3
-#define ENDIF 4
-#define IFDEF 5
-#define IFNDEF 6
-
-/******截止到这里****/
+/****预处理主程序******/
 state pretreatment(const char * name){
 	FILE * file;
 	FILE * prefile;
-	if (file=fopen(name,"r"))
+	char *interFileName=name_2_pre(name,INTERNAM,INTERNUM);
+	char *preFileName=name_2_pre(name,PRENAM,PRENUM);
+	if (ffile=fopen(name,"r"))
 	{
-		prefile=fopen(name_2_pre(name,INTERNAM,INTERNUM),"w");
+		prefile=fopen(interFileName,"w");
 		includeHandle(file,prefile);
 	}else{
 		printf("%s文件名称有误，\n请检查该文件是否存在！\n",name);
+		return ERROR;
 	}
 	fclose(file);
 	fclose(prefile);
-	if (file=fopen(name_2_pre(name,INTERNAM,INTERNUM),"r"))
+	if (file=fopen(interFileName,"r"))
 	{
-		prefile=fopen(name_2_pre(name,PRENAM,PRENUM),"w");
+		prefile=fopen(prefileName,"w");
 		defineHandle(file,prefile);
 	}else{
-		printf("%s文件名称有误，\n请检查该文件是否存在！\n",name);
+		printf("%s文件名称有误，\n请检查该文件是否存在！\n",interFileName);
 	}
-	remove(name_2_pre(name,INTERNAM,INTERNUM));
+	remove(interFileName);
+	pretreatEnd(interFileName,preFileName);
 	return OK;
 }
 
@@ -63,6 +36,33 @@ state pretreatStart(){
 		defineMenu[i].next=NULL;
 	}
 	defineState=NO;
+	return OK;
+}
+
+/** pretreatEnd 释放使用的空间 **/
+state pretreatEnd(char * name1,char *name2){
+	free(name1);
+	free(name2);
+	int i;
+	DEFINES defineState,defSta_;
+	DEFATOM token,tok_;
+	for (i = 0; i < 27; ++i)
+	{
+		defineState=defineMenu[i]->next;
+		while(defineState){
+			if (defineState->type==DEF_FUN)
+			{
+				token=defineState->value.next;
+				while(token){
+					tok_=token;
+					token=token->next;
+					free(tok_);
+				}
+			}
+			defSta_=defineState;
+			defineState=defineState->next;
+		}
+	}
 }
 
 /**转化为预处理文件名**
@@ -186,6 +186,10 @@ state string2file(char *rowString,FILE *prefile){
 		}else if (strcmp_key(rowString,"endif"))
 		{
 			defineState=ENDIF;
+		}else{
+			fputc('#',prefile);
+			while(rowString[i]!='\0') fputc(rowString[i++],prefile);
+			fputc('\n',prefile);	
 		}
 	}else{
 		if (defineState!=NO)
@@ -208,7 +212,7 @@ state strcmp_key(char *aimstr,char *conststr){
 			return FALSE;
 		}
 	}
-	if ((aimstr[i]>='a'&&aimstr[i]<='z')||(aimstr[i]>='A'&&aimstr[i]<='Z')||aimstr[i]='_')
+	if ((aimstr[i]>='a'&&aimstr[i]<='z')||(aimstr[i]>='A'&&aimstr[i]<='Z')||aimstr[i]='_'||aimstr[i]>='0'&&aimstr[i]<='9')
 	{
 		return FALSE;
 	}
@@ -218,7 +222,7 @@ state strcmp_key(char *aimstr,char *conststr){
 /** push define 元素入define**/
 state pushDefineOne(char *aimstr){
 	int i=0,n;
-	DEFINES *state;
+	DEFINES *atoms;
 	if (*aimstr=='_')
 	{
 		n=0;
@@ -228,22 +232,22 @@ state pushDefineOne(char *aimstr){
 	}else{
 		n=*aimstr-'A';
 	}
-	defineMenu[n].next=(DEFINES *)malloc(sizeof(DEFINES));
-	state=defineMenu.next;
-	state->next=NULL;
+	atoms=(DEFINES *)malloc(sizeof(DEFINES));
+	atoms->next=defineMenu.next;
+	defineMenu.next=atoms;
 	while(*aimstr!=' '&&*aimstr!='\t'&&*aimstr!='\n'){
 		i=0;
-		state->name[i++]=*aimstr;
+		atoms->name[i++]=*aimstr;
 		aimstr++;	
 	}
-	state->name[i]='\0';
+	atoms->name[i]='\0';
 	WHILE_T0(aimstr);
 	if (*aimstr=='\n')
 	{
-		state->type=DEF_ONE;
+		atoms->type=DEF_ONE;
 		return OK;
 	}
-	free(state);
+	free(atoms);
 	defineMenu[n].next=NULL;
 	return FALSE;
 }
@@ -277,5 +281,237 @@ state popDefine(char *aimstr){
 state defineHandle(FILE *file,FILE *prefile){
 	char character,c;
 	char rowString[CHAR_NUMBER];
+	char keyWord[varDefNam];
 	int i=0;
+	defineState=NO;
+	while((character=fgetc(file)) != EOF){
+		if (character!='\n')
+		{
+			rowString[i++]=character;
+		}else{
+			rowString[i]='\0';
+			rowStringDeal(rowString,file,prefile);
+			i=0;
+		}
+	}
+	rowString[i]='\0';
+	rowStringDeal(rowString,file,prefile);
+	return OK;		
+}
+
+/** rowStringDeal 用来处理define中的 **/
+/** 将 define去掉 **/
+state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
+	int i=0;
+	WHILE_T0(rowString);
+	DEFINES *local;
+	DEFATOM *local_token;
+	if (strcmp_key(rowString,"#define")==TRUE)//把undef 落了
+	{
+		while(*rowString!=' '&&*rowString!='\t') rowString++;
+		definePush(rowString);
+	}else{
+		if (defineState==NO)//非define语句
+		{
+			while(*rowString!='\0'){
+				if (WORDSTRUC(*rowString))
+				{
+					local=defineMenu[hashChar(*rowString)]->next;
+					while(local)
+					{
+						if (strcmp_key(rowString,local->name)==TRUE)
+						{
+							rowString+=strlen(local->name);
+							if (local->type==DEF_VAR)
+							{
+								fprintf(prefile, "%s\n",local->value.infor);
+							}else if (local->type==DEF_FUN)
+							{
+								WHILE_T0(rowString);
+								rowString++;
+								defineName[0][0]=1;
+								while(*rowString!=')'){
+									if(*rowString==',')
+									{
+										defineName[defineName[0][0]][i]='\0';
+										i=0;
+										defineName[0][0]++;
+									}else{
+										defineName[defineName[0][0]][i++]=*rowString;
+									}
+									rowString++;
+								}
+								defineName[j][i]='\0';//参数处理完毕
+								local_token=local->value.next;
+								while(local_token->type!=END){
+									switch(local_token->type){
+										case VAR:
+											fprintf(prefile, "%s",defineName[(int)local->c]);
+											break;
+										case NO:
+											fputc(local_token->c,prefile);
+											break;
+										case _NEXT:
+											fputc('\n',prefile);
+											break;
+										default:
+											printf("你有毒！\n"); 
+									}
+									local_token=local_token->next;
+								}
+							}else{
+								printf("ERROR!\n");
+							}
+							break;
+						}
+						local=local->next;
+					}
+					if (local==NULL)
+					{
+						while(WORDSTRUC(*rowString)||*rowString>='0'&&*rowString<='9'){
+							fputc(*rowString,prefile);
+							rowString++;
+						}
+					}//处理尾子串
+				}
+				fputc(*rowString,prefile);
+				if (*rowString!='\0')
+				 {
+				 	rowString++;
+				 } 
+			}
+			fputc('\n',prefile);
+		}else{//当define有多行的时候
+			if (defineState==DEF_FUN)
+			{
+				define_help(rowString);
+			}else{
+				printf("不带参数，你还写多行啊；\n");//lazy to finish it
+			}
+		}
+	}
+}
+
+/** definePush 将define 加入 **/ 
+state definePush(char *aimstr){
+	int i=0,n;
+	char j;//计数
+	char c;
+	state type;
+	DEFINES *atoms;
+	static DEFATOM *token;
+	if (*aimstr=='_')
+	{
+		n=0;
+	}else if (*aimstr>='a'&&*aimstr<='z')
+	{
+		n=*aimstr-'a';	
+	}else{
+		n=*aimstr-'A';
+	}
+	atoms=(DEFINES *)malloc(sizeof(DEFINES));
+	atoms->next=defineMenu.next;
+	defineMenu.next=atoms;
+	while(*aimstr!=' '&&*aimstr!='\t'&&*aimstr!='('){
+		i=0;
+		atoms->name[i++]=*aimstr;
+		aimstr++;	
+	}
+	atoms->name[i]='\0';
+	i=0;
+	switch(*aimstr){
+		case ' ':
+		case '\t':
+			WHILE_T0(aimstr);
+			while(*aimstr!='\0'&&*aimstr!='\\') atoms->value.infor[i++]=*(aimstr++);
+			atoms->value.infor[i]='\0';
+			if (*aimstr=='\\')
+			{
+				defineState=DEF_VAR;
+			}
+			break;
+		case '(':
+			atoms->type=DEF_FUN;
+			defineName[0][0]=1;
+			while(*aimstr!=')'){
+				if(*aimstr==',')
+				{
+					defineName[defineName[0][0]][i]='\0';
+					i=0;
+					defineName[0][0]++;
+				}else{
+					defineName[defineName[0][0]][i++]=*aimstr;
+				}
+				aimstr++;
+			}
+			defineName[j][i]='\0';//参数处理完毕
+			WHILE_T0(aimstr);
+			define_help(aimstr);
+			break;
+		default:
+			printf("%s ERROR!\n",aimstr);
+			return ERROR;
+	}
+	
+}
+
+/** define _help 用来辅助插入define操作 **/
+state define_help(char *aimstr){
+	token->next=(DEFATOM *)malloc(sizeof(DEFATOM));
+	token=token->next;
+	while(*aimstr!='\0'&&*aimstr!='\\'){
+		c=*aimstr;
+		type=NO;
+		if (WORDSTRUC(*aimstr))
+		{
+			for (j = 1; j <= defineName[0][0]; ++j)
+			{
+				if (strcmp_key(aimstr,defineName[j])==TRUE)
+				{
+					c=j;
+					type=VAR;
+					aimstr+=strlen(defineName[j]);
+					break;
+				}
+			}
+			if (j>defineName[0][0])
+			{
+				while(WORDSTRUC(*aimstr)||*aimstr>='0'&&*aimstr<='9'){
+					token->c=*(aimstr++);
+					token->type=NO;
+					token->next=(DEFATOM *)malloc(sizeof(DEFATOM));
+					token=token->next;	
+				}//防止尾子串
+			}
+		}
+		token->c=c;
+		token->type=type;
+		token->next=(DEFATOM *)malloc(sizeof(DEFATOM));
+		token=token->next;
+	}
+	token->type=END;
+	if (*aimstr=='\\')
+	{
+		defineState=DEF_FUN;
+		token->type=_NEXT;
+	}else{
+		defineState=NO;
+	}
+	token->next=NULL;
+	return OK;	
+}
+
+/** hash   求hash中匹配的n**/
+int hashChar(char c){
+	int n;
+	if (c=='_')
+	{
+		n=0;
+	}else if (c>='a'&&c<='z')
+	{
+		n=c-'a';	
+	}else{
+		n=c-'A';
+	}
+	return n;
 }
