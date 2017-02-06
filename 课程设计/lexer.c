@@ -3,10 +3,13 @@
 /*************头文件内容*****//***************************************************************/
 #define FILE_NAME_LENGTH 30
 #define TRUE 1
+#define WORDSTRUC(c) c>='a'&&c<='z'||c>='A'&&c<='Z'||c=='_'
 #define FALSE 0
 #define OK 1
 #define ERROR 0
+SET_TOKEN_CONCHAR;
 #define OVERFLOW -1
+#define NUMBSTRUC(c) c>='0'&&c<='9'
 typedef int state;
 #define PRENAME "pre"
 #define CHAR_NUMBER 100//读取每行代码数量
@@ -93,10 +96,10 @@ state lexerStart(void){
 	char OPR;
 	char SEP;
 	char KEY;
-	SET_TOKEN_OTHER atom_other;
-	SET_TOKEN_KEY atom_key;
-	//第一步标识符，常量，字符串
-	for (i = 0; i < 3; ++i)
+	SET_TOKEN_OTHER *atom_other;
+	SET_TOKEN_KEY *atom_key;
+	//第一步标识符，字符串
+	for (i = 0; i < 2; ++i)
 	{
 		for (j = 0; j < 27; ++j)
 		{
@@ -144,11 +147,23 @@ state lexerStart(void){
 	//第五步,2017/2/6 10:14目前没用到
 	rowNumber=1;//行号归0；
 	rowNumFile=1;
+	//第六步，常量，经修改，常量与标识符不同
+	//字符常量
+	for (i = 0; i < 10; ++i)
+	{
+		tokens_conChar[i]->next=NULL;
+	}
+	//数字常量
+	for (i = 0; i < 10; ++i)
+	{
+		tokens_conNum[i]->next=NULL;
+	}
+	return OK;
 }
 
 /** hash   求hash中匹配的n**/
 int hashChar(char c){
-	int n;
+	int n=0;
 	if (c=='_')
 	{
 		n=0;
@@ -188,32 +203,77 @@ state readFile(FILE *file,FILE *aimfile){
 /** string2file**/
 /**
 *处理一行代码并写入
+*常量部分，枚举未考虑
 **/
 state string2file(char *rowString,FILE *aimfile){
 	int lineNumber=0,tokenNumber,number;//依次为c文件中列号，token编号，出现次数
 	char *tokenStr;//token内容
 	int length;
+	int i;
 	SET_TOKEN token_134;
 	SET_TOKEN_KEY token_2;
 	SET_TOKEN_OTHER token_56;
+	SET_TOKEN_CONCHAR token_3char;
 	while(rowString[lineNumber]!='\0'){
 		if (rowString[lineNumber]==' '||"\t")
 		{
 			length=1;
-		}else{
-			if(token_56=sepOprTell(tokens_sep,&rowString[lineNumber]))
-			{//分隔符
-				length=strlen(local->value);
-				tokenNumber=TOKEN_SEP;
-				tokenStr=local->value;
-				number=++(local->num);
-			}else if (token_56=sepOprTell(tokens_opr,&rowString[lineNumber]))
-			{//运算符
-				length=strlen(local->value);
-				tokenNumber=TOKEN_OPR;
-				tokenStr=local->value;
-				number=++(local->num);
-			}//还没写符**********************************************************************************/
+		}else{//以下顺序经过考虑的
+			if (rowString[lineNumber]=='"')
+			{//字符串  
+				token_134=strTell(&rowString[lineNumber]);
+				length=strlen(token_134->value);
+				tokenNumber=TOKEN_IDE;
+				tokenStr=token_134->value;
+				number=++(token_134->num);
+			}else if (rowString[lineNumber]=='\'')
+			{//字符常量
+				token_3char=ConCharTell(&rowString[lineNumber]);
+				length=strlen(token_3char->value);
+				tokenNumber=TOKEN_CON;
+				tokenStr=token_3char->value;
+				number=++(token_3char->num);
+			}else if (rowString[lineNumber]>='0'&&rowString[lineNumber]<='9')
+			{//数字常量
+				token_134=ConNumTell(&rowString[lineNumber]);
+				length=strlen(token_134->value);
+				tokenNumber=TOKEN_CON;
+				tokenStr=token_134->value;
+				number=++(token_134->num);
+			}else if (rowString[lineNumber]>='a'&&rowString[lineNumber]<='z'||
+				rowString[lineNumber]>='A'&&rowString[lineNumber]<='Z'||
+				rowString[lineNumber]=='_')//标识符 关键字
+			{
+				if (token_2=keyTell(&rowString[lineNumber]))
+				{//关键字
+					length=strlen(token_2->value);
+					tokenNumber=TOKEN_KEY;
+					tokenStr=token_2->value;
+					number=++(token_2->num);
+				}else{//标识符
+					token_134=idenTell(&rowString[lineNumber]);
+					length=strlen(token_134->value);
+					tokenNumber=TOKEN_IDE;
+					tokenStr=token_134->value;
+					number=++(token_134->num);
+				}
+			}else {
+				if(token_56=sepOprTell(tokens_sep,&rowString[lineNumber]))
+				{//分隔符
+					length=strlen(token_56->value);
+					tokenNumber=TOKEN_SEP;
+					tokenStr=token_56->value;
+					number=++(token_56->num);
+				}else if (token_56=sepOprTell(tokens_opr,&rowString[lineNumber]))
+				{//运算符
+					length=strlen(local->value);
+					tokenNumber=TOKEN_OPR;
+					tokenStr=local->value;
+					number=++(local->num);
+				}else{
+					printf("%s你是啥东西!\n",rowString);
+				}
+			}
 			fprintf(aimfile, "%d %d %s %d %d\n",rowNumFile++,tokenNumber,tokenStr,rowNumber,lineNumber+1,number);
 		}
 		lineNumber+=length;
@@ -236,6 +296,193 @@ SET_TOKEN_OTHER *sepOprTell(SET_TOKEN_OTHER *local,char *string){
 		{
 			return local;
 		}
+		local=local->next;
 	}
 	return NULL;
+}
+
+/** keyTell 判断是否是关键字**/
+SET_TOKEN_KEY *keyTell(char *string){
+	int i;
+	SET_TOKEN_KEY *local=tokens_key[hashChar(*string)]->next;
+	while(local){
+		for (i = 0;local->value[i]!='\0'; ++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}	
+		}
+		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
+		{
+			if (strcmp(local->value,"?:")==0)
+			{
+				while(*string!=":") string++;
+				*string=' ';
+			}//处理三目运算符？：使其：为空格不处理
+			return local;
+		}
+		local=local->next;	
+	}
+	return NULL;
+}
+
+/** idenTell 标识符判断 或添加**/
+SET_TOKEN *idenTell(char *string){
+	int i,n;
+	n=hashChar(*string);
+	SET_TOKEN *local=tokens[IDENTIFIERS][n]->next;
+	while(local){
+		for (i=0;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
+		{
+			return local;
+		}
+		local=local->next;	
+	}
+	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
+	local->next=tokens[IDENTIFIERS][n]->next;
+	tokens[IDENTIFIERS][n]->next=local;
+	local->num=0;
+	i=0;
+	while(WORDSTRUC(string[i])||NUMBSTRUC(string[i])) i++;
+	local->value=(char *)malloc(i*sizeof(char)+4);
+	i=0;
+	while(WORDSTRUC(string[i])||NUMBSTRUC(string[i])){
+		local->value[i]=string[i];
+		i++;
+	}
+	local->value[i]='\0';
+	return local;
+}
+
+/**strTELl 判断字符串的 **/
+SET_TOKEN *strTell(char *string){
+	int i=1,n;
+	n=hashChar(string[1]);
+	SET_TOKEN *local=tokens[IDENTIFIERS][n]->next;
+	while(local){
+		for (i=1;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0')
+		{
+			return local;
+		}
+		local=local->next;	
+	}//检查是否有，没有下面制作
+	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
+	local->next=tokens[IDENTIFIERS][n]->next;
+	tokens[IDENTIFIERS][n]->next=local;
+	local->num=0;
+	i=1;
+	while(string[i]!='"'||string[i-1]=='\\') i++;
+	local->value=(char *)malloc(i*sizeof(char)+4);
+	i=0;
+	while(string[i]!='"'||string[i-1]=='\\'){
+		local->value[i]=string[i];
+		i++;
+	}
+	local->value[i]=string[i];
+	local->value[i+1]='\0';
+	return local;
+}
+
+/** ConCharTell 字符常量**/
+SET_TOKEN_CONCHAR *ConCharTell(char *string){
+	int i,n;
+	SET_TOKEN_CONCHAR *local;
+	n=(int)string[1]%10;
+	local=tokens_conChar[n]->next;
+	while(local){
+		for (i=1;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0')
+		{
+			return local;
+		}
+		local=local->next;	
+	}//检查是否有，没有下面制作
+	local=(SET_TOKEN_CONCHAR *)malloc(sizeof(SET_TOKEN_CONCHAR));
+	local->next=tokens_conChar[IDENTIFIERS][n]->next;
+	tokens_conChar[IDENTIFIERS][n]->next=local;
+	local->num=0;
+	i=0;
+	while(string[i]!='\''||string[i-1]=='\\'){
+		local->value[i]=string[i];
+		i++;
+	}
+	local->value[i]=string[i];
+	local->value[i+1]='\0';
+	return local;
+}
+
+/** ConNumTell 数字常量**/
+SET_TOKEN *strTell(char *string){
+	int i,n;
+	n=(int)string[0]%10;
+	SET_TOKEN *local=tokens[IDENTIFIERS][n]->next;
+	while(local){
+		for (i=0;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0'&&!(NUMBSTRUC(string[i]))&&
+			string[i]!='.'&&string[i]!='e'&&string[i]!='E'&&
+			!(WORDSTRUC(string[i])))//包括小数点，e，数字，后缀字幕
+		{
+			return local;
+		}
+		local=local->next;	
+	}//检查是否有，没有下面制作
+	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
+	local->next=tokens[IDENTIFIERS][n]->next;
+	tokens[IDENTIFIERS][n]->next=local;
+	local->num=0;
+	i=0;
+	if (string[1]=='x'||string[1]=='X')
+	{
+		i+=2;
+	}//16进制的孽障
+	// if (string[1]=='+'||string[1]=='-')
+	// {
+	// 	i++;
+	// }//正负号的孽障，算了这个孽障不管了
+	while(NUMBSTRUC(string[i]))||string[i]=='.') i++;
+	if (string[i]=='e'||string[i]=='E')
+	{
+		i++;
+		if (string[i]=='+'||string[i]=='-')
+		{
+			i++;
+		}
+		while(NUMBSTRUC(string[i]))) i++;
+	}
+	while(string[i]>='a'&&string[i]<='z'||
+		string[i]>='A'&&string[i]<='Z') i++;
+	local->value=(char *)malloc(i*sizeof(char)+4);
+	string[i]='\0';
+	while(i>=0){
+		local->value[i]=string[i];
+		i++;
+	}
+	return local;
 }
