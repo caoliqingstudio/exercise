@@ -14,6 +14,7 @@
 
 #define FILE_NAME_LENGTH 30
 #define PRENAME "pre"
+#define LEX ".lex"
 #define ROW_STRING_LENGTH 100//读取每行代码数量
 #define STRING_LENGTH_MAX 100//貌似没用
 #define CON_CHAR_MAX 8 
@@ -31,18 +32,18 @@
 #define TOKEN_OPR 5//5.运算符
 #define TOKEN_SEP 6//6.分隔符
 #define OPRNUM 39
-#define OPR opr[OPRNUM][OTHER_TOKEN_MAX]={"++","--","+","-","(",")","[","]","->",".","!",
-					"~","*","&","/","%","<<",">>","<","<=",">=",">",
-					"==","!=","^","|","&&","||","=","+=","-=","*=",
+#define OPR_ opr[OPRNUM][OTHER_TOKEN_MAX]={"++","--","+","-","(",")","[","]","->",".","!",\
+					"~","*","&","/","%","<<",">>","<","<=",">=",">",\
+					"==","!=","^","|","&&","||","=","+=","-=","*=",\
 					"/=","&=","^=","|=","<<=",">>=",",","?:"}//竟然查不到使用频度,自增在前面
 //attention:没有区分正负号和加减，没有区分取地址&和按位与&，没有sizeof,?:
 #define SEPNUM 5
-#define SEP sep[SEPNUM][OTHER_TOKEN_MAX]={",",";",":","{","}"}
+#define SEP_ sep[SEPNUM][OTHER_TOKEN_MAX]={",",";",":","{","}"}
 //SEP分隔符目前就这些吧
 #define KEYNUM 32
-#define KEY key[KEYNUM][KEY_TOKEN_MAX]={"auto","break","case","char","const","continue",
-					"double","default","do","else","enum","extern","float","for","goto",
-					"int","if","long","register","return","struct","switch","short","signed",
+#define KEY_ key[KEYNUM][KEY_TOKEN_MAX]={"auto","break","case","char","const","continue",\
+					"double","default","do","else","enum","extern","float","for","goto",\
+					"int","if","long","register","return","struct","switch","short","signed",\
 					"sizeof","static","typedef","union","unsigned","void","volatile","while"} 
 
 typedef struct word_key
@@ -83,5 +84,8 @@ int rowNumber;//c文件行号
 int rowNumFile;//目标文件中行号
 
 state lexicalAnalysis(char *name);//词法分析
+//此处使用过extern "C" 但是报错expected identifier or '(' before string constant
+//由于没能解决，所以将.c文件后缀改为.cpp
+//然后发现还不行，就只能把main中的 包含.h 改为包含.c
 
 #endif

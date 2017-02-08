@@ -56,6 +56,12 @@ typedef struct defhash
 DEFINES defineMenu[27];//0:'_';1~26:A~Z
 char defineName[DEFINEVARNUM][varDefNam];
 state defineState;
+DEFATOM *token;
+
 state pretreatment(const char *filename);
+//此处使用过extern "C" 但是报错expected identifier or '(' before string constant
+//由于没能解决，所以将.c文件后缀改为.cpp
+//然后发现还不行，就只能把main中的 包含.h 改为包含.c
+
 
 #endif

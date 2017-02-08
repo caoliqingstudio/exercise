@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "pretreat.h"
+#include "pretreat.c"
+#include "lexer.c"
 //#include "state.h"
 
 int main(int argc, char const *argv[])

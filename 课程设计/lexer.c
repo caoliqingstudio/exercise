@@ -1,60 +1,5 @@
 #include "lexer.h"
 
-/*************头文件内容*****//***************************************************************/
-#define FILE_NAME_LENGTH 30
-#define TRUE 1
-#define WORDSTRUC(c) c>='a'&&c<='z'||c>='A'&&c<='Z'||c=='_'
-#define FALSE 0
-#define OK 1
-#define ERROR 0
-SET_TOKEN_CONCHAR;
-#define OVERFLOW -1
-#define NUMBSTRUC(c) c>='0'&&c<='9'
-typedef int state;
-#define PRENAME "pre"
-#define CHAR_NUMBER 100//读取每行代码数量
-#define STRING_LENGTH_MAX 100
-#define OTHER_TOKEN_MAX 3//目前发现最多就是两个的，sizeof划入关键字
-#define KEY_TOKEN_MAX  10//关键字，8个，除非我数错了
-#define IDENTIFIERS 0 //设定数组中标识符的位次
-#define CONSTANTS 1//设定数组中常量的位次
-#define STRINGLITERALS 2//设定数组中字符串字面的位次
-#define TOKEN_IDE 1//以下为序号 1：标识符
-#define TOKEN_KEY 2//2.关键字
-#define TOKEN_CON 3//3.常量
-#define TOKEN_STR 4//4.字符串
-#define TOKEN_OPR 5//5.运算符
-#define TOKEN_SEP 6//6.分隔符
-#define
-#define WHILE_T0(str,i) 
-typedef struct word_key
-{
-	int num;
-	char value[KEY_TOKEN_MAX];
-	struct word_other *next; 
-} SET_TOKEN_KEY;
-typedef struct word_other
-{
-	int num;
-	char value[OTHER_TOKEN_MAX];
-	struct word_other *next; 
-} SET_TOKEN_OTHER;//运算符和分隔符的
-typedef struct word
-{
-	int num;
-	char *value;
-	struct word *next;
-} SET_TOKEN;
-/**
-*SET_TOKEN tokens[5][27];
-*其中，0表示标识符;
-*1表示常量;2表示字符串字面值;
-**/
-SET_TOKEN tokens[3][27];//0~25表示字母a到z,26表示下划线
-SET_TOKEN_KEY tokens_key[27];
-SET_TOKEN_OTHER tokens_opr,tokens_sep;
-
-/*********方便写代码***************************//*************************************************/
 /** 词法分析 **/
 /**
 *有点问题，由于中间使用的文件名是pre 
@@ -73,7 +18,7 @@ state lexicalAnalysisEnter(char *name){
 	strcat(aimFileName,name);
 	while(aimFileName[i++]!='.');
 	aimFileName[i]='\0';
-	strcat(aimFileName,lex);//得得目标存储文件名
+	strcat(aimFileName,LEX);//得得目标存储文件名
 	lexerStart();
 	if (file=fopen(fileName,"r"))
 	{
@@ -83,7 +28,23 @@ state lexicalAnalysisEnter(char *name){
 		printf("%s文件名称有误，\n请检查该文件是否存在！\n",fileName);
 		return ERROR;
 	}
+	lexerEnd();
 	return OK;
+}
+
+/** hash   求hash中匹配的n**/
+int hashChar_lexer(char c){
+	int n=0;
+	if (c=='_')
+	{
+		n=0;
+	}else if (c>='a'&&c<='z')
+	{
+		n=c-'a';	
+	}else{
+		n=c-'A';
+	}
+	return n;
 }
 
 /** lexerStart**/
@@ -93,9 +54,9 @@ state lexicalAnalysisEnter(char *name){
 **/
 state lexerStart(void){
 	int i,j;
-	char OPR;
-	char SEP;
-	char KEY;
+	char OPR_;
+	char SEP_;
+	char KEY_;
 	SET_TOKEN_OTHER *atom_other;
 	SET_TOKEN_KEY *atom_key;
 	//第一步标识符，字符串
@@ -129,10 +90,10 @@ state lexerStart(void){
 	//第四步，关键字
 	for (i = 0,j = 0; i < 27; ++i)
 	{
-		atom_key=&tokens_key[i]
+		atom_key=&tokens_key[i];
 		for (; j < KEYNUM; ++j)
 		{
-			if (hashChar(key[j][0])!=i)
+			if (hashChar_lexer(key[j][0])!=i)
 			{
 				break;
 			}else{
@@ -151,29 +112,60 @@ state lexerStart(void){
 	//字符常量
 	for (i = 0; i < 10; ++i)
 	{
-		tokens_conChar[i]->next=NULL;
+		tokens_conChar[i].next=NULL;
 	}
 	//数字常量
 	for (i = 0; i < 10; ++i)
 	{
-		tokens_conNum[i]->next=NULL;
+		tokens_conNum[i].next=NULL;
 	}
 	return OK;
 }
 
-/** hash   求hash中匹配的n**/
-int hashChar(char c){
-	int n=0;
-	if (c=='_')
+/**lexerEnd **/
+state lexerEnd(){
+	SET_TOKEN *token_134,*token_134_a;
+	SET_TOKEN_CONCHAR *token_3char,*token_3char_a;
+	int i,j;
+	//释放 标识符和字符串字面
+	for (i = 0; i <2; ++i)
 	{
-		n=0;
-	}else if (c>='a'&&c<='z')
-	{
-		n=c-'a';	
-	}else{
-		n=c-'A';
+		for (j = 0; j < 27; ++j)
+		{
+			token_134=tokens[i][j].next;
+			tokens[i][j].next=NULL;
+			while(token_134){
+				free(token_134->value);
+				token_134_a=token_134;
+				token_134=token_134->next;
+				free(token_134_a);
+			}
+		}
 	}
-	return n;
+	//释放数字常量
+	for (i = 0; i < 10; ++i)
+	{
+		token_134=tokens_conNum[i].next;
+		tokens_conNum[i].next=NULL;
+		while(token_134){
+			free(token_134->value);
+			token_134_a=token_134;
+			token_134=token_134->next;
+			free(token_134_a);
+		}
+	}
+	//释放字符常量
+	for (i = 0; i < 10; ++i)
+	{
+		token_3char=tokens_conChar[i].next;
+		tokens_conChar[i].next=NULL;
+		while(token_3char){
+			token_3char_a=token_3char;
+			token_3char=token_3char->next;
+			free(token_3char);
+		}
+	}
+	return OK;
 }
 
 /** readFile 文件中内容**/
@@ -188,32 +180,183 @@ state readFile(FILE *file,FILE *aimfile){
 		}else{
 			rowString[i]="\0";
 			i=0;
-			string2file(rowString,aimfile);
+			string2file_lexer(rowString,aimfile);
 			rowNumber++;
 		}
 	}
 	if (i!=0)
 	{
 		rowString[i]="\0";
-		string2file(rowString,aimfile);
+		string2file_lexer(rowString,aimfile);
 	}
 	return OK;
 }
+/** sepTell 判断是否是分隔符,运算符，返回指针**/
+SET_TOKEN_OTHER *sepOprTell(SET_TOKEN_OTHER *local,char *string){
+	int i;
+	local=local->next;
+	while(local){
+		for (i = 0;local->value[i]!='\0'; ++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}	
+		}
+		if (local->value[i]=='\0')
+		{
+			return local;
+		}
+		local=local->next;
+	}
+	return NULL;
+}
 
-/** string2file**/
+/** keyTell 判断是否是关键字**/
+SET_TOKEN_KEY *keyTell(char *string){
+	int i;
+	SET_TOKEN_KEY *local=tokens_key[hashChar_lexer(*string)].next;
+	while(local){
+		for (i = 0;local->value[i]!='\0'; ++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}	
+		}
+		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
+		{
+			if (strcmp(local->value,"?:")==0)
+			{
+				while(*string!=":") string++;
+				*string=' ';
+			}//处理三目运算符？：使其：为空格不处理
+			return local;
+		}
+		local=local->next;	
+	}
+	return NULL;
+}
+
+/** idenTell 标识符判断 或添加**/
+SET_TOKEN *idenTell(char *string){
+	int i,n;
+	n=hashChar_lexer(*string);
+	SET_TOKEN *local=tokens[IDENTIFIERS][n].next;
+	while(local){
+		for (i=0;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
+		{
+			return local;
+		}
+		local=local->next;	
+	}
+	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
+	local->next=tokens[IDENTIFIERS][n].next;
+	tokens[IDENTIFIERS][n].next=local;
+	local->num=0;
+	i=0;
+	while(WORDSTRUC(string[i])||NUMBSTRUC(string[i])) i++;
+	local->value=(char *)malloc(i*sizeof(char)+4);
+	i=0;
+	while(WORDSTRUC(string[i])||NUMBSTRUC(string[i])){
+		local->value[i]=string[i];
+		i++;
+	}
+	local->value[i]='\0';
+	return local;
+}
+
+/**strTELl 判断字符串的 **/
+SET_TOKEN *strTell(char *string){
+	int i=1,n;
+	n=hashChar_lexer(string[1]);
+	SET_TOKEN *local=tokens[IDENTIFIERS][n].next;
+	while(local){
+		for (i=1;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0')
+		{
+			return local;
+		}
+		local=local->next;	
+	}//检查是否有，没有下面制作
+	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
+	local->next=tokens[IDENTIFIERS][n].next;
+	tokens[IDENTIFIERS][n].next=local;
+	local->num=0;
+	i=1;
+	while(string[i]!='"'||string[i-1]=='\\') i++;
+	local->value=(char *)malloc(i*sizeof(char)+4);
+	i=0;
+	while(string[i]!='"'||string[i-1]=='\\'){
+		local->value[i]=string[i];
+		i++;
+	}
+	local->value[i]=string[i];
+	local->value[i+1]='\0';
+	return local;
+}
+
+/** ConCharTell 字符常量**/
+SET_TOKEN_CONCHAR *ConCharTell(char *string){
+	int i,n;
+	SET_TOKEN_CONCHAR *local;
+	n=(int)string[1]%10;
+	local=tokens_conChar[n].next;
+	while(local){
+		for (i=1;local->value[i]!='\0';++i)
+		{
+			if (string[i]!=local->value[i])
+			{
+				break;
+			}
+		}
+		if (local->value[i]=='\0')
+		{
+			return local;
+		}
+		local=local->next;	
+	}//检查是否有，没有下面制作
+	local=(SET_TOKEN_CONCHAR *)malloc(sizeof(SET_TOKEN_CONCHAR));
+	local->next=tokens_conChar[n].next;
+	tokens_conChar[n].next=local;
+	local->num=0;
+	i=0;
+	while(string[i]!='\''||string[i-1]=='\\'){
+		local->value[i]=string[i];
+		i++;
+	}
+	local->value[i]=string[i];
+	local->value[i+1]='\0';
+	return local;
+}
+
+/** string2file_lexer**/
 /**
 *处理一行代码并写入
 *常量部分，枚举未考虑
 **/
-state string2file(char *rowString,FILE *aimfile){
+state string2file_lexer(char *rowString,FILE *aimfile){
 	int lineNumber=0,tokenNumber,number;//依次为c文件中列号，token编号，出现次数
 	char *tokenStr;//token内容
 	int length;
 	int i;
-	SET_TOKEN token_134;
-	SET_TOKEN_KEY token_2;
-	SET_TOKEN_OTHER token_56;
-	SET_TOKEN_CONCHAR token_3char;
+	SET_TOKEN *token_134;
+	SET_TOKEN_KEY *token_2;
+	SET_TOKEN_OTHER *token_56;
+	SET_TOKEN_CONCHAR *token_3char;
 	while(rowString[lineNumber]!='\0'){
 		if (rowString[lineNumber]==' '||"\t")
 		{
@@ -258,18 +401,18 @@ state string2file(char *rowString,FILE *aimfile){
 					number=++(token_134->num);
 				}
 			}else {
-				if(token_56=sepOprTell(tokens_sep,&rowString[lineNumber]))
+				if(token_56=sepOprTell(&tokens_sep,&rowString[lineNumber]))
 				{//分隔符
 					length=strlen(token_56->value);
 					tokenNumber=TOKEN_SEP;
 					tokenStr=token_56->value;
 					number=++(token_56->num);
-				}else if (token_56=sepOprTell(tokens_opr,&rowString[lineNumber]))
+				}else if (token_56=sepOprTell(&tokens_opr,&rowString[lineNumber]))
 				{//运算符
-					length=strlen(local->value);
+					length=strlen(token_56->value);
 					tokenNumber=TOKEN_OPR;
-					tokenStr=local->value;
-					number=++(local->num);
+					tokenStr=token_56->value;
+					number=++(token_56->num);
 				}else{
 					printf("%s你是啥东西!\n",rowString);
 				}
@@ -279,210 +422,4 @@ state string2file(char *rowString,FILE *aimfile){
 		lineNumber+=length;
 	}
 	return OK;
-}
-
-/** sepTell 判断是否是分隔符,运算符，返回指针**/
-SET_TOKEN_OTHER *sepOprTell(SET_TOKEN_OTHER *local,char *string){
-	int i;
-	while(local){
-		for (i = 0;local->value[i]!='\0'; ++i)
-		{
-			if (string[i]!=local->value[i])
-			{
-				break;
-			}	
-		}
-		if (local->value[i]=='\0')
-		{
-			return local;
-		}
-		local=local->next;
-	}
-	return NULL;
-}
-
-/** keyTell 判断是否是关键字**/
-SET_TOKEN_KEY *keyTell(char *string){
-	int i;
-	SET_TOKEN_KEY *local=tokens_key[hashChar(*string)]->next;
-	while(local){
-		for (i = 0;local->value[i]!='\0'; ++i)
-		{
-			if (string[i]!=local->value[i])
-			{
-				break;
-			}	
-		}
-		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
-		{
-			if (strcmp(local->value,"?:")==0)
-			{
-				while(*string!=":") string++;
-				*string=' ';
-			}//处理三目运算符？：使其：为空格不处理
-			return local;
-		}
-		local=local->next;	
-	}
-	return NULL;
-}
-
-/** idenTell 标识符判断 或添加**/
-SET_TOKEN *idenTell(char *string){
-	int i,n;
-	n=hashChar(*string);
-	SET_TOKEN *local=tokens[IDENTIFIERS][n]->next;
-	while(local){
-		for (i=0;local->value[i]!='\0';++i)
-		{
-			if (string[i]!=local->value[i])
-			{
-				break;
-			}
-		}
-		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
-		{
-			return local;
-		}
-		local=local->next;	
-	}
-	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
-	local->next=tokens[IDENTIFIERS][n]->next;
-	tokens[IDENTIFIERS][n]->next=local;
-	local->num=0;
-	i=0;
-	while(WORDSTRUC(string[i])||NUMBSTRUC(string[i])) i++;
-	local->value=(char *)malloc(i*sizeof(char)+4);
-	i=0;
-	while(WORDSTRUC(string[i])||NUMBSTRUC(string[i])){
-		local->value[i]=string[i];
-		i++;
-	}
-	local->value[i]='\0';
-	return local;
-}
-
-/**strTELl 判断字符串的 **/
-SET_TOKEN *strTell(char *string){
-	int i=1,n;
-	n=hashChar(string[1]);
-	SET_TOKEN *local=tokens[IDENTIFIERS][n]->next;
-	while(local){
-		for (i=1;local->value[i]!='\0';++i)
-		{
-			if (string[i]!=local->value[i])
-			{
-				break;
-			}
-		}
-		if (local->value[i]=='\0')
-		{
-			return local;
-		}
-		local=local->next;	
-	}//检查是否有，没有下面制作
-	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
-	local->next=tokens[IDENTIFIERS][n]->next;
-	tokens[IDENTIFIERS][n]->next=local;
-	local->num=0;
-	i=1;
-	while(string[i]!='"'||string[i-1]=='\\') i++;
-	local->value=(char *)malloc(i*sizeof(char)+4);
-	i=0;
-	while(string[i]!='"'||string[i-1]=='\\'){
-		local->value[i]=string[i];
-		i++;
-	}
-	local->value[i]=string[i];
-	local->value[i+1]='\0';
-	return local;
-}
-
-/** ConCharTell 字符常量**/
-SET_TOKEN_CONCHAR *ConCharTell(char *string){
-	int i,n;
-	SET_TOKEN_CONCHAR *local;
-	n=(int)string[1]%10;
-	local=tokens_conChar[n]->next;
-	while(local){
-		for (i=1;local->value[i]!='\0';++i)
-		{
-			if (string[i]!=local->value[i])
-			{
-				break;
-			}
-		}
-		if (local->value[i]=='\0')
-		{
-			return local;
-		}
-		local=local->next;	
-	}//检查是否有，没有下面制作
-	local=(SET_TOKEN_CONCHAR *)malloc(sizeof(SET_TOKEN_CONCHAR));
-	local->next=tokens_conChar[IDENTIFIERS][n]->next;
-	tokens_conChar[IDENTIFIERS][n]->next=local;
-	local->num=0;
-	i=0;
-	while(string[i]!='\''||string[i-1]=='\\'){
-		local->value[i]=string[i];
-		i++;
-	}
-	local->value[i]=string[i];
-	local->value[i+1]='\0';
-	return local;
-}
-
-/** ConNumTell 数字常量**/
-SET_TOKEN *strTell(char *string){
-	int i,n;
-	n=(int)string[0]%10;
-	SET_TOKEN *local=tokens[IDENTIFIERS][n]->next;
-	while(local){
-		for (i=0;local->value[i]!='\0';++i)
-		{
-			if (string[i]!=local->value[i])
-			{
-				break;
-			}
-		}
-		if (local->value[i]=='\0'&&!(NUMBSTRUC(string[i]))&&
-			string[i]!='.'&&string[i]!='e'&&string[i]!='E'&&
-			!(WORDSTRUC(string[i])))//包括小数点，e，数字，后缀字幕
-		{
-			return local;
-		}
-		local=local->next;	
-	}//检查是否有，没有下面制作
-	local=(SET_TOKEN *)malloc(sizeof(SET_TOKEN));
-	local->next=tokens[IDENTIFIERS][n]->next;
-	tokens[IDENTIFIERS][n]->next=local;
-	local->num=0;
-	i=0;
-	if (string[1]=='x'||string[1]=='X')
-	{
-		i+=2;
-	}//16进制的孽障
-	// if (string[1]=='+'||string[1]=='-')
-	// {
-	// 	i++;
-	// }//正负号的孽障，算了这个孽障不管了
-	while(NUMBSTRUC(string[i]))||string[i]=='.') i++;
-	if (string[i]=='e'||string[i]=='E')
-	{
-		i++;
-		if (string[i]=='+'||string[i]=='-')
-		{
-			i++;
-		}
-		while(NUMBSTRUC(string[i]))) i++;
-	}
-	while(string[i]>='a'&&string[i]<='z'||
-		string[i]>='A'&&string[i]<='Z') i++;
-	local->value=(char *)malloc(i*sizeof(char)+4);
-	string[i]='\0';
-	while(i>=0){
-		local->value[i]=string[i];
-		i++;
-	}
-	return local;
 }

@@ -1,12 +1,30 @@
 #include "pretreat.h"
 
+/**转化为预处理文件名**
+*name:原来文件名
+*pre:前置文件名头
+*num:前置文件名开头
+*/
+char * name_2_pre(const char *name,char *pre,int num){
+	char * prename= (char *)malloc(strlen(name)+num+6);//分配空间，+1即可
+	if (prename==NULL)
+	{
+		exit(OVERFLOW);
+	}
+	strcpy(prename,pre);
+	strcpy(prename+num,name);
+	return prename;
+}
+
 /****预处理主程序******/
 state pretreatment(const char * name){
 	FILE * file;
 	FILE * prefile;
-	char *interFileName=name_2_pre(name,INTERNAM,INTERNUM);
-	char *preFileName=name_2_pre(name,PRENAM,PRENUM);
-	if (ffile=fopen(name,"r"))
+	char *interFileName;
+	char *preFileName;
+	interFileName=name_2_pre(name,INTERNAM,INTERNUM);
+	preFileName=name_2_pre(name,PRENAM,PRENUM);
+	if (file=fopen(name,"r"))
 	{
 		prefile=fopen(interFileName,"w");
 		includeHandle(file,prefile);
@@ -18,7 +36,7 @@ state pretreatment(const char * name){
 	fclose(prefile);
 	if (file=fopen(interFileName,"r"))
 	{
-		prefile=fopen(prefileName,"w");
+		prefile=fopen(preFileName,"w");
 		defineHandle(file,prefile);
 	}else{
 		printf("%s文件名称有误，\n请检查该文件是否存在！\n",interFileName);
@@ -44,18 +62,18 @@ state pretreatEnd(char * name1,char *name2){
 	free(name1);
 	free(name2);
 	int i;
-	DEFINES defineState,defSta_;
-	DEFATOM token,tok_;
+	DEFINES *defineState,*defSta_;
+	DEFATOM *_token,*tok_;
 	for (i = 0; i < 27; ++i)
 	{
-		defineState=defineMenu[i]->next;
+		defineState=defineMenu[i].next;
 		while(defineState){
 			if (defineState->type==DEF_FUN)
 			{
-				token=defineState->value.next;
-				while(token){
-					tok_=token;
-					token=token->next;
+				_token=defineState->value.next;
+				while(_token){
+					tok_=_token;
+					_token=_token->next;
 					free(tok_);
 				}
 			}
@@ -63,22 +81,6 @@ state pretreatEnd(char * name1,char *name2){
 			defineState=defineState->next;
 		}
 	}
-}
-
-/**转化为预处理文件名**
-*name:原来文件名
-*pre:前置文件名头
-*num:前置文件名开头
-*/
-char * name_2_pre(char * name,char *pre,int num){
-	char * prename= (char*)malloc(strlen(name)+num+6);//分配空间，+1即可
-	if (prename==NULL)
-	{
-		exit(OVERFLOW);
-	}
-	strcpy(prename,pre);
-	strcpy(prename+num,name);
-	return prename;
 }
 
 /** includeHandle 处理include以及条件编译指令**/
@@ -133,7 +135,7 @@ state string2file(char *rowString,FILE *prefile){
 			while(rowString[i]!='\"'&&rowString[i]!='>') i++;
 			rowString[i]='\0';
 			FILE *newFile;
-			if (newFile=fopen(rowString))
+			if (newFile=fopen(rowString,"r"))
 			{
 				includeHandle(newFile,prefile);
 			}else{
@@ -212,7 +214,9 @@ state strcmp_key(char *aimstr,char *conststr){
 			return FALSE;
 		}
 	}
-	if ((aimstr[i]>='a'&&aimstr[i]<='z')||(aimstr[i]>='A'&&aimstr[i]<='Z')||aimstr[i]='_'||aimstr[i]>='0'&&aimstr[i]<='9')
+	if ((aimstr[i]>='a'&&aimstr[i]<='z')||
+		(aimstr[i]>='A'&&aimstr[i]<='Z')||
+		aimstr[i]=='_'||(aimstr[i]>='0'&&aimstr[i]<='9'))
 	{
 		return FALSE;
 	}
@@ -233,8 +237,8 @@ state pushDefineOne(char *aimstr){
 		n=*aimstr-'A';
 	}
 	atoms=(DEFINES *)malloc(sizeof(DEFINES));
-	atoms->next=defineMenu.next;
-	defineMenu.next=atoms;
+	atoms->next=defineMenu[n].next;
+	defineMenu[n].next=atoms;
 	while(*aimstr!=' '&&*aimstr!='\t'&&*aimstr!='\n'){
 		i=0;
 		atoms->name[i++]=*aimstr;
@@ -299,6 +303,21 @@ state defineHandle(FILE *file,FILE *prefile){
 	return OK;		
 }
 
+/** hash   求hash中匹配的n**/
+int hashChar(char c){
+	int n;
+	if (c=='_')
+	{
+		n=0;
+	}else if (c>='a'&&c<='z')
+	{
+		n=c-'a';	
+	}else{
+		n=c-'A';
+	}
+	return n;
+}
+
 /** rowStringDeal 用来处理define中的 **/
 /** 将 define去掉 **/
 state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
@@ -316,7 +335,7 @@ state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
 			while(*rowString!='\0'){
 				if (WORDSTRUC(*rowString))
 				{
-					local=defineMenu[hashChar(*rowString)]->next;
+					local=defineMenu[hashChar(*rowString)].next;
 					while(local)
 					{
 						if (strcmp_key(rowString,local->name)==TRUE)
@@ -341,12 +360,12 @@ state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
 									}
 									rowString++;
 								}
-								defineName[j][i]='\0';//参数处理完毕
-								local_token=local->value.next;
+								defineName[defineName[0][0]][i]='\0';//参数处理完毕
+								local_token=local->value.next->next;
 								while(local_token->type!=END){
 									switch(local_token->type){
 										case VAR:
-											fprintf(prefile, "%s",defineName[(int)local->c]);
+											fprintf(prefile, "%s",defineName[(int)local_token->c]);
 											break;
 										case NO:
 											fputc(local_token->c,prefile);
@@ -399,7 +418,6 @@ state definePush(char *aimstr){
 	char c;
 	state type;
 	DEFINES *atoms;
-	static DEFATOM *token;
 	if (*aimstr=='_')
 	{
 		n=0;
@@ -410,8 +428,8 @@ state definePush(char *aimstr){
 		n=*aimstr-'A';
 	}
 	atoms=(DEFINES *)malloc(sizeof(DEFINES));
-	atoms->next=defineMenu.next;
-	defineMenu.next=atoms;
+	atoms->next=defineMenu[n].next;
+	defineMenu[n].next=atoms;
 	while(*aimstr!=' '&&*aimstr!='\t'&&*aimstr!='('){
 		i=0;
 		atoms->name[i++]=*aimstr;
@@ -446,6 +464,8 @@ state definePush(char *aimstr){
 			}
 			defineName[j][i]='\0';//参数处理完毕
 			WHILE_T0(aimstr);
+			atoms->next=(DEFATOM *)malloc(sizeof(DEFATOM));
+			token=atoms->next;
 			define_help(aimstr);
 			break;
 		default:
@@ -457,6 +477,9 @@ state definePush(char *aimstr){
 
 /** define _help 用来辅助插入define操作 **/
 state define_help(char *aimstr){
+	char c;
+	char j;
+	state type;
 	token->next=(DEFATOM *)malloc(sizeof(DEFATOM));
 	token=token->next;
 	while(*aimstr!='\0'&&*aimstr!='\\'){
@@ -499,19 +522,4 @@ state define_help(char *aimstr){
 	}
 	token->next=NULL;
 	return OK;	
-}
-
-/** hash   求hash中匹配的n**/
-int hashChar(char c){
-	int n;
-	if (c=='_')
-	{
-		n=0;
-	}else if (c>='a'&&c<='z')
-	{
-		n=c-'a';	
-	}else{
-		n=c-'A';
-	}
-	return n;
 }
