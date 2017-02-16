@@ -12,7 +12,6 @@
 #include <malloc.h>
 #include "state.h"
 
-#define FILE_NAME_LENGTH 30
 #define PRENAME "pre"
 #define LEX "lex"
 #define ROW_STRING_LENGTH 100//读取每行代码数量
@@ -23,8 +22,8 @@
 #define IDENTIFIERS 0 //设定数组中标识符的位次
 //#define CONSTANTS 1//设定数组中常量的位次
 #define STRINGLITERALS 1//设定数组中字符串字面的位次
-#define WORDSTRUC(c) c>='a'&&c<='z'||c>='A'&&c<='Z'||c=='_'
-#define NUMBSTRUC(c) c>='0'&&c<='9'
+#define WORDSTRUC(c) (c>='a'&&c<='z')||(c>='A'&&c<='Z')||c=='_'
+#define NUMBSTRUC(c) (c>='0'&&c<='9')
 #define TOKEN_IDE 1//以下为序号 1：标识符
 #define TOKEN_KEY 2//2.关键字
 #define TOKEN_CON 3//3.常量

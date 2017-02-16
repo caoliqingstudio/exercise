@@ -1,5 +1,65 @@
 #include "lexer.h"
 
+/** name2pre得到 pre的文件名**/
+char * name2pre(char *name,char *pre){
+	int i,j=0;
+	i=strlen(name);
+	char * prename= (char *)malloc(i+strlen(pre)+6);//分配空间，+1即可
+	if (prename==NULL)
+	{
+		exit(OVERFLOW);
+	}
+	while(--i){
+		if(name[i]=='\\'||name[i]=='/')
+			break;
+	}
+	if(i!=0)
+	{
+		j=i+1;
+	}
+	while(i){
+		prename[i]=name[i];
+		i--;
+	}
+	prename[i]=name[i];
+	prename[j]='\0';
+	strcat(prename,pre);
+	strcat(prename,&(name[j]));
+	return prename;
+}
+
+/** name2lex 得到后缀文件名 **/
+char *name2lex(char *name,char *aim){
+	int i,j=0;
+	i=strlen(name);
+	char *aimname= (char *)malloc(i+strlen(aim)+6);
+	if (aimname==NULL)
+	{
+		exit(OVERFLOW);
+	}
+	j=i;
+	while(--i){
+		if(name[i]=='\\'||name[i]=='/')
+		{
+			break;
+		}
+		if(name[i]=='.')
+		{
+			j=i;
+			break;
+		}
+	}
+	i=j-1;
+	while(i){
+		aimname[i]=name[i];
+		i--;
+	}
+	aimname[i]=name[i];
+	aimname[j]='\0';
+	strcat(aimname,aim);
+	return aimname;
+}
+
 /** 词法分析 **/
 /**
 *有点问题，由于中间使用的文件名是pre
@@ -9,17 +69,11 @@
 state lexicalAnalysisEnter(char *name){
 	FILE * file;
 	FILE * aimfile;
-	char fileName[FILE_NAME_LENGTH];
-	char aimFileName[FILE_NAME_LENGTH];
+	char *fileName;
+	char *aimFileName;
 	int i=0;
-	*fileName='\0';
-	*aimFileName='\0';
-	strcat(fileName,PRENAME);
-	strcat(fileName,name);//得到pre文件名
-	strcat(aimFileName,name);
-	while(aimFileName[i++]!='.');
-	aimFileName[i]='\0';
-	strcat(aimFileName,LEX);//得得目标存储文件名
+	fileName=name2pre(name,"pre");
+	aimFileName=name2lex(name,".lex");
 	lexerStart();
 	if (file=fopen(fileName,"r"))
 	{
@@ -29,7 +83,7 @@ state lexicalAnalysisEnter(char *name){
 		printf("%s文件名称有误，\n请检查该文件是否存在！\n",fileName);
 		return ERROR;
 	}
-	lexerEnd();
+	lexerEnd(fileName,aimFileName);
 	return OK;
 }
 
@@ -125,10 +179,12 @@ state lexerStart(void){
 }
 
 /**lexerEnd **/
-state lexerEnd(){
+state lexerEnd(char *name1,char *name2){
 	SET_TOKEN *token_134,*token_134_a;
 	SET_TOKEN_CONCHAR *token_3char,*token_3char_a;
 	int i,j;
+	free(name1);
+	free(name2);
 	//释放 标识符和字符串字面
 	for (i = 0; i <2; ++i)
 	{
@@ -333,6 +389,12 @@ SET_TOKEN *ConNumTell(char *string){
 	tokens_conNum[n].next=local;
 	local->num=0;
 	i=0;
+	if(string[1]=='X'||string[1]=='x')
+	{
+		i=2;
+		while(string[i]>='a'&&string[i]<='f'||string[i]>='A'&&string[i]<='F'||NUMBSTRUC(string[i]))
+			i++;
+	}
 	while(NUMBSTRUC(string[i])) i++;
 	if(string[i]=='.'){
 		i++;
@@ -380,7 +442,8 @@ SET_TOKEN_CONCHAR *ConCharTell(char *string){
 	local->next=tokens_conChar[n].next;
 	tokens_conChar[n].next=local;
 	local->num=0;
-	i=0;
+	local->value[0]='\'';
+	i=1;
 	while(string[i]!='\''||string[i-1]=='\\'){
 		local->value[i]=string[i];
 		i++;
@@ -464,8 +527,8 @@ state string2file_lexer(char *rowString,FILE *aimfile){
 					printf("%s你是啥东西!\n",rowString);
 				}
 			}
-			fprintf(aimfile, "%d %d %s %d %d\n",rowNumFile++,tokenNumber,tokenStr,rowNumber,lineNumber+1,number);
-			printf("%d %d %s %d %d\n",rowNumFile,tokenNumber,tokenStr,rowNumber,lineNumber+1,number);//CESHI
+			fprintf(aimfile, "%d %d %s %d ",rowNumFile++,tokenNumber,tokenStr,rowNumber,lineNumber+1);
+			fprintf(aimfile,"%d\n",number);
 		}
 		lineNumber+=length;
 	}

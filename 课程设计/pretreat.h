@@ -19,7 +19,7 @@
 #define INTERNAM "inter"
 #define CHAR_NUMBER 100//读取每行代码数量
 #define varDefNam 30//define 中名字
-#define varDefValue 30//define中值的字符串
+#define varDefValue 100//define中值的字符串
 #define DEFINEVARNUM 20//define 中变量的个数
 #define MENU 0
 #define DEF_ONE 1
@@ -35,9 +35,10 @@
 #define ENDIF 0
 #define IFDEF 1
 #define IFNDEF 1
+#define CHAR2INT(x) (((int)x)&0Xff)
 #define WHILE_T0(x) while(*x==' '||*x=='\t') x++;
-#define WHILE_T0FILE(x,file) while(*x==' '||*x=='\t'){fputc(*x,file);x++;}
-#define WORDSTRUC(c) c>='a'&&c<='z'||c>='A'&&c<='Z'||c=='_'
+#define FILEWHILE_T0(x,file) while(*x==' '||*x=='\t'){fputc(*x,file);x++;}
+#define WORDSTRUC(c) (c>='a'&&c<='z')||(c>='A'&&c<='Z')||c=='_'
 typedef struct deffunc{
 	state type;
 	char c;

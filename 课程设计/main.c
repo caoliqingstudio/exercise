@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 		order++;
 	};*/
 	/******************************/
-	char filename[]="123.c";
+	char filename[]="sourceTest.c";
 	//pretreatment(filename);
 	lexicalAnalysisEnter(filename);
 	/*******************************/
