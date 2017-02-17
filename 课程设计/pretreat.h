@@ -55,6 +55,8 @@ typedef struct defhash
 	struct  defhash *next;
 } DEFINES;
 
+char path[100];//存储路径
+char pathSystem[100]="C:\\";//没有设定开心就好
 DEFINES defineMenu[27];//0:'_';1~26:A~Z
 char defineName[DEFINEVARNUM][varDefNam];
 state defineState;

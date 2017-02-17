@@ -23,10 +23,13 @@ char * name_2_pre(char *name,char *pre,int num){
 	}
 	while(i){
 		prename[i]=name[i];
+		path[i]=name[i];
 		i--;
 	}
 	prename[i]=name[i];
+	path[i]=name[i];
 	prename[j]='\0';
+	path[i]='\0';
 	strcat(prename,pre);
 	strcat(prename,&(name[j]));
 	return prename;
@@ -171,7 +174,10 @@ state string2file(char *rowString,FILE *prefile){
 			while(rowString[i]!='\"'&&rowString[i]!='>') i++;
 			rowString[i]='\0';
 			FILE *newFile;
-			if ((newFile=fopen(rowString,"r"))!=NULL)
+			char filename[100];
+			strcpy(filename,path);
+			strcat(filename,rowString);
+			if ((newFile=fopen(filename,"r"))!=NULL)
 			{
 				includeHandle(newFile,prefile);
 			}else{
@@ -492,6 +498,7 @@ state define_help(char *aimstr){
 /** ½« defineÈ¥µô **/
 state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
 	int i=0;
+	char *startString=rowString;
 	WHILE_T0(rowString);
 	DEFINES *local;
 	DEFATOM *local_token;
@@ -503,6 +510,10 @@ state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
 		while(*rowString!=' '&&*rowString!='\t') rowString++;
 		defineDelete(rowString);
 	} else{
+		while(startString!=rowString){
+			fputc(*startString,prefile);
+			startString++;
+		}
 		if (defineState==NO)//·ÇdefineÓï¾ä
 		{
 			while(*rowString!='\0'){

@@ -468,7 +468,7 @@ state string2file_lexer(char *rowString,FILE *aimfile){
 	SET_TOKEN_OTHER *token_56;
 	SET_TOKEN_CONCHAR *token_3char;
 	while(rowString[lineNumber]!='\0'){
-		if (rowString[lineNumber]==' '||rowString[lineNumber]=="\t")
+		if (rowString[lineNumber]==' '||rowString[lineNumber]=='\t')
 		{
 			length=1;
 		}else{//以下顺序经过考虑的
@@ -527,8 +527,8 @@ state string2file_lexer(char *rowString,FILE *aimfile){
 					printf("%s你是啥东西!\n",rowString);
 				}
 			}
-			fprintf(aimfile, "%d %d %s %d ",rowNumFile++,tokenNumber,tokenStr,rowNumber,lineNumber+1);
-			fprintf(aimfile,"%d\n",number);
+			fprintf(aimfile, "%-4d %-4d %-40s ",rowNumFile++,tokenNumber,tokenStr);
+			fprintf(aimfile,"%-4d %-4d %-4d\n",rowNumber,lineNumber+1,number);
 		}
 		lineNumber+=length;
 	}

@@ -4,9 +4,9 @@
 #include "state.h"
 
 int main(int argc, char *argv[])
-{/*
+{
     int order=1;
-	while(argc--)//允许循环进行
+	while(order<argc)//允许循环进行
 	{
 		printf("编译预处理正在进行！\n");
 		if(pretreatment(argv[order])==OK){
@@ -21,12 +21,7 @@ int main(int argc, char *argv[])
 			printf("pre%s词法分析处理失败！\n",argv[order]);
 		}
 		order++;
-	};*/
-	/******************************/
-	char filename[]="sourceTest.c";
-	//pretreatment(filename);
-	lexicalAnalysisEnter(filename);
-	/*******************************/
+	};
 	printf("可以运行");
 	return 0;
 }
