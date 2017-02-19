@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "pretreat.c"
 #include "lexer.c"
 #include "state.h"
 
@@ -9,11 +8,6 @@ int main(int argc, char *argv[])
 	while(order<argc)//允许循环进行
 	{
 		printf("编译预处理正在进行！\n");
-		if(pretreatment(argv[order])==OK){
-			printf("%s预处理完毕！\n",argv[order]);
-		}else{
-			printf("%s处理失败！\n",argv[order]);
-		}
 		if (lexicalAnalysisEnter(argv[order])==OK)
 		{
 			printf("pre%s词法分析完毕！\n",argv[order]);
@@ -22,6 +16,6 @@ int main(int argc, char *argv[])
 		}
 		order++;
 	};
-	printf("可以运行");
+	printf("词法分析运行结束！\n");
 	return 0;
 }

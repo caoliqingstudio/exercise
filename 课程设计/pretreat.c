@@ -227,6 +227,16 @@ state string2file(char *rowString,FILE *prefile){
 				}else{
 					defineState=NO;
 				}
+			}else{
+				defineState= ELIF;
+			}
+		}else if (strcmp_key(rowString,"else"))
+		{
+			if (defineState!=NO)
+			{
+				defineState=NO;
+			}else{
+				defineState=ELSE;
 			}
 		}else if (strcmp_key(rowString,"endif"))
 		{

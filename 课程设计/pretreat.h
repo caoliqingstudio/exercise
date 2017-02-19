@@ -6,13 +6,6 @@
 #include <malloc.h>
 #include "state.h"
 
-// #define TRUE 1
-// #define FALSE 0
-// #define OK 1
-// #define ERROR 0
-// #define OVERFLOW -1
-// typedef int state;
-/*以上内容为state.h的内容不知道怎么才好看*/
 #define PRENUM 3
 #define PRENAM "pre"
 #define INTERNUM 5
