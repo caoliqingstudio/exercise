@@ -17,7 +17,7 @@ char * name_2_pre(char *name,char *pre,int num){
 		if(name[i]=='\\'||name[i]=='/')
 			break;
 	}
-	if(i!=0)
+	if(i)
 	{
 		j=i+1;
 	}
@@ -26,10 +26,10 @@ char * name_2_pre(char *name,char *pre,int num){
 		path[i]=name[i];
 		i--;
 	}
-	prename[i]=name[i];
-	path[i]=name[i];
+	prename[0]=name[0];
+	path[0]=name[0];
 	prename[j]='\0';
-	path[i]='\0';
+	path[j]='\0';
 	strcat(prename,pre);
 	strcat(prename,&(name[j]));
 	return prename;
@@ -423,6 +423,7 @@ state definePush(char *aimstr){
 			{
 				defineState=DEF_VAR;
 			}
+			defStateLocal=atoms;
 			break;
 		case '(':
 			aimstr++;
@@ -560,6 +561,7 @@ state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
 									}									
 									rowString++;
 								}
+								rowString++;
 								local_token=(local->value).next;
 								local_token=local_token->next;
 								while(local_token&&local_token->type!=END){
@@ -605,7 +607,9 @@ state rowStringDeal(char *rowString,FILE *file,FILE *prefile){
 			{
 				define_help(rowString);
 			}else{
-				printf("不带参数，你还写多行啊；\n");//lazy to finish it
+				char huanhang[]="\n";
+				strcat(defStateLocal->value.infor,huanhang);
+				strcat(defStateLocal->value.infor,rowString);
 			}
 		}
 	}

@@ -55,6 +55,7 @@ char defineName[DEFINEVARNUM][varDefNam];
 state defineState;
 DEFATOM *token;
 state state_double;//双引号的
+DEFINES *defStateLocal;
 
 state pretreatment(char *filename);
 //此处使用过extern "C" 但是报错expected identifier or '(' before string constant

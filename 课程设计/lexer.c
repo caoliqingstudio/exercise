@@ -84,6 +84,8 @@ state lexicalAnalysisEnter(char *name){
 		return ERROR;
 	}
 	lexerEnd(fileName,aimFileName);
+	fclose(file);
+	fclose(aimfile);
 	return OK;
 }
 
@@ -244,7 +246,7 @@ state readFile(FILE *file,FILE *aimfile){
 	}
 	if (i!=0)
 	{
-		rowString[i]="\0";
+		rowString[i]='\0';
 		string2file_lexer(rowString,aimfile);
 	}
 	return OK;
@@ -476,7 +478,7 @@ state string2file_lexer(char *rowString,FILE *aimfile){
 			{//×Ö·û´®
 				token_134=strTell(&rowString[lineNumber]);
 				length=strlen(token_134->value);
-				tokenNumber=TOKEN_IDE;
+				tokenNumber=TOKEN_STR;
 				tokenStr=token_134->value;
 				number=++(token_134->num);
 			}else if (rowString[lineNumber]=='\'')
