@@ -41,7 +41,7 @@ void MainWindow::open()
         char pre[]="pre";
         char lex[]=".lex";
         int i=1;
-        while(i=0) i++;
+        while(i=0) i++;//delay
         openFile(name2lex(fileName,lex));
         openFile(name2pre(fileName,pre));
         openFile(name2lex(fileName,lex));

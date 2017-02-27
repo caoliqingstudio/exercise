@@ -265,6 +265,11 @@ SET_TOKEN_OTHER *sepOprTell(SET_TOKEN_OTHER *local,char *string){
 		}
 		if (local->value[i]=='\0')
 		{
+			if (strcmp(local->value,"?:")==0)
+			{
+				while(*string!=":") string++;
+				*string=' ';
+			}//处理三目运算符？：使其：为空格不处理
 			return local;
 		}
 		local=local->next;
@@ -286,11 +291,6 @@ SET_TOKEN_KEY *keyTell(char *string){
 		}
 		if (local->value[i]=='\0'&&!(WORDSTRUC(string[i])||NUMBSTRUC(string[i])))
 		{
-			if (strcmp(local->value,"?:")==0)
-			{
-				while(*string!=":") string++;
-				*string=' ';
-			}//处理三目运算符？：使其：为空格不处理
 			return local;
 		}
 		local=local->next;
@@ -411,7 +411,7 @@ SET_TOKEN *ConNumTell(char *string){
 		}
 		while(NUMBSTRUC(string[i])) i++;
 	}
-	while(string[i]>='a'&&string<='z'||string[i]>='A'&&string<='Z') i++;
+	while(string[i]>='a'&&string[i]<='z'||string[i]>='A'&&string[i]<='Z') i++;
 	local->value=(char *)malloc(i*sizeof(char)+4);
 	local->value[i]='\0';
 	while(i--){

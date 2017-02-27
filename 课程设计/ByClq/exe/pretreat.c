@@ -368,22 +368,28 @@ state defineHandle(FILE *file,FILE *prefile){
 	return OK;
 }
 
-/** #define CHAR2INT(x) (((int)x)&0xff)**/
-//int CHAR2INT(char c){
-//	return (((int)c)&0xff);
-//}
 
 /** defineDelete ½«defineÉ¾³ý**/
 state defineDelete(char *aimstr){
-	DEFINES *local;
-	DEFATOM *local_token;
+	DEFINES *local,*local_token;
+	DEFATOM *local_atom,*local_atom_token;
 	WHILE_T0(aimstr);
+	local_token=&defineMenu[hashChar(*aimstr)];
 	local=defineMenu[hashChar(*aimstr)].next;
 	while(local)
 	{
 		if (strcmp_key(aimstr,local->name)==TRUE)
 		{
 			local_token=local->next;
+			if(local->type==DEF_FUN)
+			{
+				local_atom=local->value.next;
+				while(local_atom){
+					local_atom_token=local_atom;
+					local_atom=local_atom->next;
+					free(local_atom_token);
+				}
+			}
 			free(local);
 			return OK;
 		}
