@@ -18,8 +18,8 @@
 #define DEF_ONE 1
 #define DEF_VAR 2
 #define DEF_FUN 3//define 中三种形式
-#define END 10
-#define _NEXT 11//define 的多行
+#define END 22
+#define _NEXT 21//define 的多行
 #define VAR 1
 #define NO 0
 #define IF 1

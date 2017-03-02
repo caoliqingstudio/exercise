@@ -15,7 +15,7 @@
 #define PRENAME "pre"
 #define LEX "lex"
 #define ROW_STRING_LENGTH 100//读取每行代码数量
-#define STRING_LENGTH_MAX 100//貌似没用
+#define STRING_LENGTH_MAX 100//貌似没用、后来删了
 #define CON_CHAR_MAX 8
 #define OTHER_TOKEN_MAX 3//目前发现最多就是两个的，sizeof划入关键字
 #define KEY_TOKEN_MAX  10//关键字，8个，除非我数错了
@@ -86,5 +86,6 @@ state lexicalAnalysis(char *name);//词法分析
 //此处使用过extern "C" 但是报错expected identifier or '(' before string constant
 //由于没能解决，所以将.c文件后缀改为.cpp
 //然后发现还不行，就只能把main中的 包含.h 改为包含.c
+//最后发现，如果在工程中.h是可以用的
 
 #endif
