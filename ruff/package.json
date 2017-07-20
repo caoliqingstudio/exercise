@@ -1,0 +1,21 @@
+{
+    "name": "d",
+    "version": "0.1.0",
+    "description": "",
+    "author": "",
+    "main": "src/index.js",
+    "ruff": {
+        "boards": {
+            "ruff-mbd-v1": "^4.2.2",
+            "*": "*"
+        },
+        "dependencies": {
+            "button-gpio": "^2.0.6",
+            "sound-01": "^1.1.6",
+            "dht11": "^0.3.6",
+            "buzzer-gpio": "^0.2.5",
+            "ky-016": "^2.0.5",
+            "gy-30": "^3.0.6"
+        }
+    }
+}
